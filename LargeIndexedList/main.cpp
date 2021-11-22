@@ -30,25 +30,35 @@ public:
 	};
 	MiniIndexedList(MiniIndexedList& _var)
 	{
-		currentPtr = headPtr = new indexBox<T>();
+		indexBox<T>* tempIndexBox = new indexBox<T>();
+		
+		currentPtr = headPtr = nullptr;
 		_var.currentPtr = _var.headPtr;
 		size = 0;
 		currentColumnCapacity = 1;
 		rowSize = 0;
 
+		if (_var.headPtr != nullptr)
+		{
+			currentPtr = headPtr = new indexBox<T>();
+			currentPtr->valsPtr = new T[currentColumnCapacity];
+			*currentPtr->valsPtr = *_var.currentPtr->valsPtr;
+			currentPtr->index = _var.currentPtr->index;
+			_var.currentPtr = _var.currentPtr->next;
+			currentColumnCapacity <<= 1;
+		}
 		while (_var.currentPtr != nullptr)
 		{
-			indexBox<T>* newBoxPtr = new indexBox<T>();
+			currentPtr->next = new indexBox<T>();
+			currentPtr = currentPtr->next;
 			currentPtr->valsPtr = new T[currentColumnCapacity];
 			currentPtr->index = _var.currentPtr->index;
 			copy(_var.currentPtr->valsPtr, _var.currentPtr->valsPtr + currentColumnCapacity, currentPtr->valsPtr);
-			currentPtr->next = newBoxPtr;
-			currentPtr = currentPtr->next;
 			_var.currentPtr = _var.currentPtr->next;
 			currentColumnCapacity <<= 1;
 		}
 	};
-	~MiniIndexedList()
+	~MiniIndexedList() 
 	{
 		indexBox<T>* tempCurrentPtr = nullptr;
 		currentPtr = headPtr;
