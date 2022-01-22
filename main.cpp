@@ -16,10 +16,10 @@ class MiniIndexedList
 {
 private:
 	indexBox<T>* headPtr, * currentPtr;
-	size_t	size;
 	size_t	currentColumnCapacity;
 	size_t	rowSize;
 public:
+	size_t	size;
 	MiniIndexedList()
 	{
 		headPtr = nullptr;
@@ -31,7 +31,7 @@ public:
 	MiniIndexedList(MiniIndexedList& _var)
 	{
 		indexBox<T>* tempIndexBox = new indexBox<T>();
-		
+
 		currentPtr = headPtr = nullptr;
 		_var.currentPtr = _var.headPtr;
 		size = 0;
@@ -46,6 +46,7 @@ public:
 			currentPtr->index = _var.currentPtr->index;
 			_var.currentPtr = _var.currentPtr->next;
 			currentColumnCapacity <<= 1;
+			rowSize++;
 		}
 		while (_var.currentPtr != nullptr)
 		{
@@ -56,9 +57,11 @@ public:
 			copy(_var.currentPtr->valsPtr, _var.currentPtr->valsPtr + currentColumnCapacity, currentPtr->valsPtr);
 			_var.currentPtr = _var.currentPtr->next;
 			currentColumnCapacity <<= 1;
+			rowSize++;
 		}
+		size = _var.size;
 	};
-	~MiniIndexedList() 
+	~MiniIndexedList()
 	{
 		indexBox<T>* tempCurrentPtr = nullptr;
 		currentPtr = headPtr;
@@ -71,11 +74,34 @@ public:
 			delete	tempCurrentPtr;
 		}
 	};
-	inline size_t	getSize()
-	{
-		return	size;
-	};
 	inline int	pushBack(const T&& _var)
+	{
+		if (size >= currentColumnCapacity - 1)
+		{
+			indexBox<T>* newBoxPtr = new indexBox<T>();
+
+			if (headPtr == nullptr)
+			{
+				currentPtr = headPtr = newBoxPtr;
+				headPtr->valsPtr = new T[1];
+				headPtr->next = nullptr;
+			}
+			else
+			{
+				newBoxPtr->next = nullptr;
+				newBoxPtr->index = size;
+				newBoxPtr->valsPtr = new T[currentColumnCapacity];
+				currentPtr->next = newBoxPtr;
+				currentPtr = newBoxPtr;
+			}
+			currentColumnCapacity <<= 1;
+			rowSize++;
+		}
+		currentPtr->valsPtr[++size - (currentColumnCapacity >> 1)] = _var;
+
+		return	0;
+	};
+	inline int	pushBack(const T& _var)
 	{
 		if (size >= currentColumnCapacity - 1)
 		{
@@ -115,6 +141,7 @@ public:
 			delete	tempCurrentPtr;
 			rowSize--;
 		}
+		headPtr = nullptr;
 
 		if (rowSize != 0)
 			return	1;
@@ -132,13 +159,9 @@ public:
 
 		tempIndex1++;
 
-		if (tempIndex1 > currentColumnCapacity * 2 - 1)
-			throw	out_of_range("Access outside the allocated area.");
-		else if (tempIndex1 > size)
-			throw	out_of_range("Access is greater than size.");
-		else if (tempIndex1 == 1)
-			return	headPtr->valsPtr[0];
-		else
+		if (tempIndex1 == 1)
+			return	currentPtr->valsPtr[0];
+		else if (tempIndex1 <= size)
 		{
 			while (tempIndex1 != 1)
 			{
@@ -151,25 +174,19 @@ public:
 				currentPtr = currentPtr->next;
 			return	currentPtr->valsPtr[index - tempIndex2 + 1];
 		}
+		else
+			throw	out_of_range("access error");
 	}
 };
 
 int main()
 {
-	MiniIndexedList<unsigned int> indexedList1;
+	MiniIndexedList<int> indexedList1;
 
-	indexedList1.pushBack(1U);
-	indexedList1.pushBack(2U);
-	indexedList1.pushBack(3U);
-	indexedList1.pushBack(4U);
-	indexedList1.pushBack(5U);
-	indexedList1.pushBack(6U);
-	indexedList1.pushBack(7U);
-	indexedList1.pushBack(8U);
-	indexedList1.pushBack(9U);
-	indexedList1.pushBack(10U);
-
-	MiniIndexedList<unsigned int>	indexedList2(indexedList1);
+	for (int i = 1; i < 10000001; i++)
+		indexedList1.pushBack(i);
+	for (int i = 0; i < 10000000; i++)
+		indexedList1[i];
 
 	return	0;
 }
